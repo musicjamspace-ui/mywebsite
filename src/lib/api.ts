@@ -118,6 +118,34 @@ function normalizeBooking(raw: Record<string, unknown>): Booking {
   };
 }
 
+export type StoreOrder = {
+  id: string;
+  customer: string;
+  phone: string;
+  address: string;
+  productName: string;
+  amount: number;
+  payment: "COD" | "Prepayment";
+  status: "New" | "Contacted" | "Dispatched" | "Delivered";
+  notes?: string;
+  createdAt?: string;
+};
+
+function normalizeOrder(raw: Record<string, unknown>): StoreOrder {
+  return {
+    id: String(raw.id ?? ""),
+    customer: String(raw.customer ?? ""),
+    phone: String(raw.phone ?? ""),
+    address: String(raw.address ?? ""),
+    productName: String(raw.productName ?? raw.product_name ?? ""),
+    amount: Number(raw.amount ?? 0),
+    payment: (String(raw.payment ?? "COD") as StoreOrder["payment"]) || "COD",
+    status: (String(raw.status ?? "New") as StoreOrder["status"]) || "New",
+    notes: raw.notes == null ? "" : String(raw.notes),
+    createdAt: raw.createdAt == null ? "" : String(raw.createdAt),
+  };
+}
+
 export async function fetchBookings(): Promise<Booking[]> {
   const res = await fetch(`${API_BASE}/api/bookings`, { cache: "no-store" });
   if (!res.ok) throw new Error(await parseError(res));
@@ -182,6 +210,71 @@ export async function updateBookingApi(
 
 export async function deleteBookingApi(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (res.status === 204) return;
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+}
+
+export async function fetchOrdersApi(): Promise<StoreOrder[]> {
+  const res = await fetch(`${API_BASE}/api/orders`, {
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+  const raw = await res.json();
+  if (!Array.isArray(raw)) return [];
+  return raw.map((o) => normalizeOrder(o as Record<string, unknown>));
+}
+
+export async function createOrderApi(payload: {
+  id: string;
+  customer: string;
+  phone: string;
+  address?: string;
+  productName: string;
+  amount: number;
+  payment: "COD" | "Prepayment";
+  notes?: string;
+}): Promise<StoreOrder> {
+  const res = await fetch(`${API_BASE}/api/orders`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+  return normalizeOrder((await res.json()) as Record<string, unknown>);
+}
+
+export async function updateOrderApi(
+  id: string,
+  payload: Partial<{
+    customer: string;
+    phone: string;
+    address: string;
+    productName: string;
+    amount: number;
+    payment: "COD" | "Prepayment";
+    status: "New" | "Contacted" | "Dispatched" | "Delivered";
+    notes: string;
+  }>,
+): Promise<StoreOrder> {
+  const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+  return normalizeOrder((await res.json()) as Record<string, unknown>);
+}
+
+export async function deleteOrderApi(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: authHeaders(),
   });

@@ -29,10 +29,15 @@ import { toast } from "sonner";
 import {
   API_BASE,
   apiLogin,
+  createOrderApi,
+  deleteOrderApi,
+  fetchOrdersApi,
   getStoredToken,
   onAdminAuthLost,
   setBookRouteAccess,
   setStoredToken,
+  type StoreOrder,
+  updateOrderApi,
 } from "@/lib/api";
 import {
   formatHourRange,
@@ -60,18 +65,7 @@ import { Textarea } from "@/components/ui/textarea";
 type AdminSection = "overview" | "booking" | "store" | "orders";
 type StoreCategoryFilter = "all" | string;
 
-type AdminOrder = {
-  id: string;
-  customer: string;
-  phone: string;
-  address: string;
-  productName: string;
-  amount: number;
-  payment: "COD" | "Prepayment";
-  status: "New" | "Contacted" | "Dispatched" | "Delivered";
-  notes?: string;
-  createdAt?: string;
-};
+type AdminOrder = StoreOrder;
 
 type ProductForm = {
   id: string;
@@ -86,32 +80,7 @@ type ProductForm = {
   specsText: string;
 };
 
-const INITIAL_ORDERS: AdminOrder[] = [
-  {
-    id: "ORD-1001",
-    customer: "Aarav KC",
-    phone: "9801234567",
-    address: "Baneshwor, Kathmandu",
-    productName: "Professional Drum Kit",
-    amount: 28000,
-    payment: "COD",
-    status: "New",
-    notes: "Wants delivery before Sunday.",
-    createdAt: "2025-04-10 14:32",
-  },
-  {
-    id: "ORD-1002",
-    customer: "Sita Thapa",
-    phone: "9856781234",
-    address: "Lalitpur, Patan",
-    productName: "Electric Guitar",
-    amount: 12500,
-    payment: "Prepayment",
-    status: "Contacted",
-    notes: "",
-    createdAt: "2025-04-11 09:15",
-  },
-];
+const INITIAL_ORDERS: AdminOrder[] = [];
 
 function toMultiLine(items: string[]) {
   return items.join("\n");
@@ -1240,6 +1209,7 @@ export default function Admin() {
     useState<StoreCategoryFilter>("all");
 
   const [orders, setOrders] = useState<AdminOrder[]>(INITIAL_ORDERS);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<AdminOrder | null>(null);
 
@@ -1268,6 +1238,29 @@ export default function Admin() {
   }, []);
 
   useEffect(() => onAdminAuthLost(() => setAuthed(false)), []);
+
+  useEffect(() => {
+    if (!authed) return;
+    let active = true;
+    (async () => {
+      setOrdersLoading(true);
+      try {
+        const data = await fetchOrdersApi();
+        if (!active) return;
+        setOrders(data);
+      } catch (err) {
+        if (!active) return;
+        toast.error(
+          err instanceof Error ? err.message : "Failed to load orders",
+        );
+      } finally {
+        if (active) setOrdersLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [authed]);
 
   useEffect(() => {
     const update = () => setIsNarrowViewport(window.innerWidth < 1200);
@@ -2711,17 +2704,33 @@ export default function Admin() {
                               </p>
                               <select
                                 value={viewingOrder.status}
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const next = e.target
                                     .value as AdminOrder["status"];
-                                  setOrders((prev) =>
-                                    prev.map((item) =>
-                                      item.id === viewingOrder.id
-                                        ? { ...item, status: next }
-                                        : item,
-                                    ),
-                                  );
-                                  toast.success(`Status → ${next}`);
+                                  try {
+                                    const updated = await updateOrderApi(
+                                      viewingOrder.id,
+                                      { status: next },
+                                    );
+                                    setOrders((prev) =>
+                                      prev.map((item) =>
+                                        item.id === viewingOrder.id
+                                          ? {
+                                              ...item,
+                                              ...updated,
+                                              address: item.address,
+                                            }
+                                          : item,
+                                      ),
+                                    );
+                                    toast.success(`Status → ${next}`);
+                                  } catch (err) {
+                                    toast.error(
+                                      err instanceof Error
+                                        ? err.message
+                                        : "Failed to update order status",
+                                    );
+                                  }
                                 }}
                                 className="rounded-full text-xs font-bold px-3 py-1.5 cursor-pointer outline-none appearance-none"
                                 style={{
@@ -2739,14 +2748,23 @@ export default function Admin() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => {
-                                setOrders((prev) =>
-                                  prev.filter(
-                                    (item) => item.id !== viewingOrder.id,
-                                  ),
-                                );
-                                setViewingOrderId(null);
-                                toast.success("Order deleted.");
+                              onClick={async () => {
+                                try {
+                                  await deleteOrderApi(viewingOrder.id);
+                                  setOrders((prev) =>
+                                    prev.filter(
+                                      (item) => item.id !== viewingOrder.id,
+                                    ),
+                                  );
+                                  setViewingOrderId(null);
+                                  toast.success("Order deleted.");
+                                } catch (err) {
+                                  toast.error(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Failed to delete order",
+                                  );
+                                }
                               }}
                               className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold"
                               style={{
@@ -2810,7 +2828,7 @@ export default function Admin() {
                         </div>
                         <form
                           className="p-6 space-y-4"
-                          onSubmit={(e) => {
+                          onSubmit={async (e) => {
                             e.preventDefault();
                             if (
                               !editingOrder.customer.trim() ||
@@ -2822,26 +2840,59 @@ export default function Admin() {
                               );
                               return;
                             }
-                            if (editingOrder.id) {
-                              setOrders((prev) =>
-                                prev.map((o) =>
-                                  o.id === editingOrder.id ? editingOrder : o,
-                                ),
+                            try {
+                              if (editingOrder.id) {
+                                const updated = await updateOrderApi(
+                                  editingOrder.id,
+                                  {
+                                    customer: editingOrder.customer,
+                                    phone: editingOrder.phone,
+                                    address: editingOrder.address,
+                                    productName: editingOrder.productName,
+                                    amount: editingOrder.amount,
+                                    payment: editingOrder.payment,
+                                    status: editingOrder.status,
+                                    notes: editingOrder.notes ?? "",
+                                  },
+                                );
+                                setOrders((prev) =>
+                                  prev.map((o) =>
+                                    o.id === editingOrder.id
+                                      ? {
+                                          ...o,
+                                          ...updated,
+                                          address: editingOrder.address,
+                                        }
+                                      : o,
+                                  ),
+                                );
+                                toast.success("Order updated.");
+                              } else {
+                                const newId = `ORD-${Date.now()}`;
+                                const created = await createOrderApi({
+                                  id: newId,
+                                  customer: editingOrder.customer,
+                                  phone: editingOrder.phone,
+                                  address: editingOrder.address,
+                                  productName: editingOrder.productName,
+                                  amount: editingOrder.amount,
+                                  payment: editingOrder.payment,
+                                  notes: editingOrder.notes ?? "",
+                                });
+                                setOrders((prev) => [
+                                  { ...created, address: editingOrder.address },
+                                  ...prev,
+                                ]);
+                                toast.success("Order added.");
+                              }
+                              setEditingOrder(null);
+                            } catch (err) {
+                              toast.error(
+                                err instanceof Error
+                                  ? err.message
+                                  : "Failed to save order",
                               );
-                              toast.success("Order updated.");
-                            } else {
-                              const newId = `ORD-${String(Date.now()).slice(-4)}`;
-                              const now = new Date()
-                                .toISOString()
-                                .slice(0, 16)
-                                .replace("T", " ");
-                              setOrders((prev) => [
-                                { ...editingOrder, id: newId, createdAt: now },
-                                ...prev,
-                              ]);
-                              toast.success("Order added.");
                             }
-                            setEditingOrder(null);
                           }}
                         >
                           <div className="grid grid-cols-2 gap-4">
@@ -3068,6 +3119,14 @@ export default function Admin() {
                       >
                         Track and manage Buy Now orders
                       </p>
+                      {ordersLoading && (
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: "rgba(255,255,255,0.45)" }}
+                        >
+                          Loading latest orders...
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -3332,17 +3391,33 @@ export default function Admin() {
                                   <td className="px-4 py-3">
                                     <select
                                       value={o.status}
-                                      onChange={(e) => {
+                                      onChange={async (e) => {
                                         const next = e.target
                                           .value as AdminOrder["status"];
-                                        setOrders((prev) =>
-                                          prev.map((item) =>
-                                            item.id === o.id
-                                              ? { ...item, status: next }
-                                              : item,
-                                          ),
-                                        );
-                                        toast.success(`Status → ${next}`);
+                                        try {
+                                          const updated = await updateOrderApi(
+                                            o.id,
+                                            { status: next },
+                                          );
+                                          setOrders((prev) =>
+                                            prev.map((item) =>
+                                              item.id === o.id
+                                                ? {
+                                                    ...item,
+                                                    ...updated,
+                                                    address: item.address,
+                                                  }
+                                                : item,
+                                            ),
+                                          );
+                                          toast.success(`Status → ${next}`);
+                                        } catch (err) {
+                                          toast.error(
+                                            err instanceof Error
+                                              ? err.message
+                                              : "Failed to update order status",
+                                          );
+                                        }
                                       }}
                                       className="rounded-full text-xs font-bold px-2.5 py-1 cursor-pointer outline-none transition-all appearance-none"
                                       style={{
@@ -3395,13 +3470,22 @@ export default function Admin() {
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={() => {
-                                          setOrders((prev) =>
-                                            prev.filter(
-                                              (item) => item.id !== o.id,
-                                            ),
-                                          );
-                                          toast.success("Order deleted.");
+                                        onClick={async () => {
+                                          try {
+                                            await deleteOrderApi(o.id);
+                                            setOrders((prev) =>
+                                              prev.filter(
+                                                (item) => item.id !== o.id,
+                                              ),
+                                            );
+                                            toast.success("Order deleted.");
+                                          } catch (err) {
+                                            toast.error(
+                                              err instanceof Error
+                                                ? err.message
+                                                : "Failed to delete order",
+                                            );
+                                          }
                                         }}
                                         title="Delete"
                                         className="flex items-center justify-center rounded-lg p-1.5"
