@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import BookClient from "@/views/BookClient";
+import { Suspense } from "react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
 
@@ -79,7 +80,9 @@ export default function BookPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(bookingJsonLd) }}
       />
-      <BookClient />
+      <Suspense fallback={null}>
+        <BookClient />
+      </Suspense>
     </>
   );
 }

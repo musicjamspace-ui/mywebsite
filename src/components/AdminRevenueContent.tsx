@@ -57,9 +57,19 @@ function SectionHeader({ icon: Icon, title, sub }: { icon: React.ElementType; ti
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label, formatter }: any) {
+type TooltipValue = number | string;
+
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ value: TooltipValue }>;
+  label?: string;
+  formatter?: (value: number) => string;
+};
+
+function CustomTooltip({ active, payload, label, formatter }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
+  const rawValue = payload[0]?.value;
+  const numericValue = typeof rawValue === "number" ? rawValue : Number(rawValue) || 0;
   return (
     <div
       className="rounded-lg px-3 py-2 text-sm shadow-xl"
@@ -71,7 +81,7 @@ function CustomTooltip({ active, payload, label, formatter }: any) {
     >
       <p className="text-xs mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</p>
       <p className="font-bold" style={{ color: "#e2e8f0" }}>
-        {formatter ? formatter(payload[0].value) : payload[0].value}
+        {formatter ? formatter(numericValue) : rawValue}
       </p>
     </div>
   );
