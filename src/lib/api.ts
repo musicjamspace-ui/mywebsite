@@ -118,6 +118,8 @@ function normalizeBooking(raw: Record<string, unknown>): Booking {
   };
 }
 
+
+
 export type StoreOrder = {
   id: string;
   customer: string;
