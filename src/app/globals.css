@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 8%;
+    --foreground: 40 20% 92%;
+
+    --card: 220 18% 12%;
+    --card-foreground: 40 20% 92%;
+
+    --popover: 220 18% 14%;
+    --popover-foreground: 40 20% 92%;
+
+    /* Cool whitish accent (replaces gold/yellow) */
+    --primary: 210 25% 93%;
+    --primary-foreground: 220 22% 12%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 40 15% 80%;
+
+    --muted: 220 15% 16%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 220 14% 76%;
+    --accent-foreground: 220 22% 12%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 210 25% 78%;
+
+    --radius: 0.5rem;
+
+    --slot-available: 145 60% 40%;
+    --slot-booked: 0 65% 50%;
+    --slot-current: 210 30% 82%;
+
+    --sidebar-background: 220 18% 10%;
+    --sidebar-foreground: 40 20% 92%;
+    --sidebar-primary: 210 25% 93%;
+    --sidebar-primary-foreground: 220 22% 12%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 40 20% 92%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 210 25% 78%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Space Grotesk', sans-serif;
+    -webkit-tap-highlight-color: hsl(var(--primary) / 0.15);
+  }
+
+  code, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}

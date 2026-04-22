@@ -1,0 +1,74 @@
+<!--
+  EmailJS: paste into template Content (HTML).
+  Variables: {{product_name}} {{product_price}} {{customer_name}} {{phone}}
+  {{payment_mode}} {{location}} {{landmark}} {{notes}}
+  Subject: {{subject}} (set in EmailJS subject line from app)
+  Theme: light / whitish — matches Music Jam Space neutral UI.
+-->
+<div style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f9;padding:28px 14px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,0.06);">
+          <tr>
+            <td style="padding:20px 24px;border-bottom:1px solid #e2e8f0;background:#fafbfc;">
+              <p style="margin:0;font-size:11px;font-weight:bold;letter-spacing:0.1em;text-transform:uppercase;color:#64748b;">Music Jam Space</p>
+              <h1 style="margin:6px 0 0;font-size:18px;line-height:1.35;font-weight:700;color:#0f172a;">New store order</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:22px 24px;color:#334155;">
+              <p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94a3b8;">Product</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;">Item</td>
+                  <td style="padding:8px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;">{{product_name}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9;">Price</td>
+                  <td style="padding:8px 0;font-size:14px;font-weight:700;color:#334155;text-align:right;border-top:1px solid #f1f5f9;">Rs. {{product_price}}</td>
+                </tr>
+              </table>
+
+              <p style="margin:22px 0 12px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94a3b8;">Customer</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;">Name</td>
+                  <td style="padding:8px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;">{{customer_name}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9;">Phone</td>
+                  <td style="padding:8px 0;font-size:14px;color:#0f172a;text-align:right;border-top:1px solid #f1f5f9;">{{phone}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9;">Payment</td>
+                  <td style="padding:8px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-top:1px solid #f1f5f9;">{{payment_mode}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9;">Location</td>
+                  <td style="padding:8px 0;font-size:14px;color:#0f172a;text-align:right;border-top:1px solid #f1f5f9;">{{location}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9;">Landmark</td>
+                  <td style="padding:8px 0;font-size:14px;color:#0f172a;text-align:right;border-top:1px solid #f1f5f9;">{{landmark}}</td>
+                </tr>
+              </table>
+
+              <div style="margin-top:18px;padding:14px 16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+                <p style="margin:0 0 6px;font-size:12px;color:#64748b;">Notes</p>
+                <p style="margin:0;font-size:14px;line-height:1.5;color:#334155;">{{notes}}</p>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:14px 24px;border-top:1px solid #e2e8f0;font-size:11px;line-height:1.45;color:#94a3b8;background:#fafbfc;">
+              Sent automatically from the Music Jam Space store order form.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
