@@ -1,8 +1,17 @@
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import type { NextConfig } from "next";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Only set when repo root is parent (e.g. jamspace/client + jamspace/server). On Vercel with a client-only repo, `..` is outside the deployment and breaks the build. */
+const parentDir = path.join(__dirname, "..");
+const outputFileTracingRoot =
+  fs.existsSync(path.join(parentDir, "server", "package.json")) ||
+  fs.existsSync(path.join(parentDir, "package.json"))
+    ? parentDir
+    : undefined;
 
 /**
  * Dev proxy: browser calls same-origin `/api/*`; Next forwards to the remote.
@@ -17,8 +26,7 @@ const apiProxyRemote =
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  /** Monorepo: trace files from repo root (avoids wrong root when multiple lockfiles exist). */
-  outputFileTracingRoot: path.join(__dirname, ".."),
+  ...(outputFileTracingRoot ? { outputFileTracingRoot } : {}),
   async headers() {
     return [
       {
