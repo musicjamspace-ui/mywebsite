@@ -1,7 +1,7 @@
 "use client";
 
 import { useBookingsQuery } from "@/hooks/useBookingsQuery";
-import { API_BASE } from "@/lib/api";
+import { apiUrl } from "@/lib/api";
 import { CheckCircle2, AlertCircle, Loader2, ExternalLink } from "lucide-react";
 
 export default function BookingsStatus() {
@@ -39,7 +39,7 @@ export default function BookingsStatus() {
         <p className="text-xs pl-6" style={{ color: "rgba(255,255,255,0.35)" }}>
           Make sure the Express server is running.{" "}
           <a
-            href={`${API_BASE}/api/health`}
+            href={apiUrl("/api/health")}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 underline hover:no-underline transition-all"
@@ -82,7 +82,7 @@ export default function BookingsStatus() {
         </span>
         {data.length === 0 && (
           <a
-            href={`${API_BASE}/api/debug/bookings`}
+            href={apiUrl("/api/debug/bookings")}
             target="_blank"
             rel="noreferrer"
             className="ml-auto text-[11px] underline hover:no-underline"

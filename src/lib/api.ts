@@ -1,7 +1,35 @@
 import { normalizeBookingYmd, type Booking } from "@/lib/bookingStore";
 import type { StoreProduct } from "@/lib/storeProducts";
+import { getSiteUrl } from "@/lib/siteUrl";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const DEV_PROXY_TARGET =
+  process.env.NEXT_PUBLIC_DEV_API_PROXY_TARGET?.trim().replace(/\/$/, "") || "";
+
+/**
+ * When `NEXT_PUBLIC_DEV_API_PROXY_TARGET` is set in development, the browser uses same-origin `/api` (Next rewrites).
+ * Server Components / RSC fetch need an absolute URL — use `getSiteUrl()` (dev server or `NEXT_PUBLIC_SITE_URL`).
+ */
+export function getApiBase(): string {
+  if (process.env.NODE_ENV === "development" && DEV_PROXY_TARGET) {
+    if (typeof window === "undefined") {
+      return getSiteUrl();
+    }
+    return "";
+  }
+  const raw = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (raw) return raw.replace(/\/$/, "");
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3001";
+  }
+  return getSiteUrl();
+}
+
+/** Absolute or relative URL for an API path (e.g. `/api/bookings`). */
+export function apiUrl(apiPath: string): string {
+  const path = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
+  const base = getApiBase();
+  return base ? `${base}${path}` : path;
+}
 
 export const ADMIN_TOKEN_KEY = "jamspace-admin-token";
 /** Set with admin login so /book/* routes allow access without re-entering password. */
@@ -216,7 +244,7 @@ function normalizeOrder(raw: Record<string, unknown>): StoreOrder {
 }
 
 export async function fetchBookings(): Promise<Booking[]> {
-  const res = await fetch(`${API_BASE}/api/bookings`, { cache: "no-store" });
+  const res = await fetch(apiUrl("/api/bookings"), { cache: "no-store" });
   if (!res.ok) throw new Error(await parseError(res));
   const raw = await res.json();
   if (!Array.isArray(raw)) return [];
@@ -224,7 +252,7 @@ export async function fetchBookings(): Promise<Booking[]> {
 }
 
 export async function apiLogin(password: string): Promise<{ token: string }> {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
+  const res = await fetch(apiUrl("/api/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
@@ -247,7 +275,7 @@ export async function createBookingApi(payload: {
   bandName: string;
   contactDetails?: string | null;
 }): Promise<Booking> {
-  const res = await fetch(`${API_BASE}/api/bookings`, {
+  const res = await fetch(apiUrl("/api/bookings"), {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(payload),
@@ -267,7 +295,7 @@ export async function updateBookingApi(
     contactDetails: string | null;
   }>,
 ): Promise<Booking> {
-  const res = await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/bookings/${encodeURIComponent(id)}`), {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(payload),
@@ -278,7 +306,7 @@ export async function updateBookingApi(
 }
 
 export async function deleteBookingApi(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/bookings/${encodeURIComponent(id)}`), {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -288,7 +316,7 @@ export async function deleteBookingApi(id: string): Promise<void> {
 }
 
 export async function fetchOrdersApi(): Promise<StoreOrder[]> {
-  const res = await fetch(`${API_BASE}/api/orders`, {
+  const res = await fetch(apiUrl("/api/orders"), {
     cache: "no-store",
     headers: authHeaders(),
   });
@@ -313,7 +341,7 @@ export async function submitPublicStoreOrder(payload: {
   payment: "COD" | "Prepayment";
   notes?: string | null;
 }): Promise<StoreOrder> {
-  const res = await fetch(`${API_BASE}/api/orders`, {
+  const res = await fetch(apiUrl("/api/orders"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -341,7 +369,7 @@ export async function createOrderApi(payload: {
   payment: "COD" | "Prepayment";
   notes?: string;
 }): Promise<StoreOrder> {
-  const res = await fetch(`${API_BASE}/api/orders`, {
+  const res = await fetch(apiUrl("/api/orders"), {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(payload),
@@ -364,7 +392,7 @@ export async function updateOrderApi(
     notes: string;
   }>,
 ): Promise<StoreOrder> {
-  const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/orders/${encodeURIComponent(id)}`), {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(payload),
@@ -375,7 +403,7 @@ export async function updateOrderApi(
 }
 
 export async function deleteOrderApi(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/orders/${encodeURIComponent(id)}`), {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -386,7 +414,7 @@ export async function deleteOrderApi(id: string): Promise<void> {
 
 /** Public catalogue — no auth. Pass `next: { revalidate: n }` from Server Components. */
 export async function fetchStoreProducts(init?: RequestInit): Promise<StoreProduct[]> {
-  const res = await fetch(`${API_BASE}/api/products`, {
+  const res = await fetch(apiUrl("/api/products"), {
     ...init,
     headers: { Accept: "application/json", ...init?.headers },
   });
@@ -400,7 +428,7 @@ export async function fetchStoreProductById(
   id: string,
   init?: RequestInit,
 ): Promise<StoreProduct | null> {
-  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/products/${encodeURIComponent(id)}`), {
     ...init,
     headers: { Accept: "application/json", ...init?.headers },
   });
@@ -410,7 +438,7 @@ export async function fetchStoreProductById(
 }
 
 export async function createProductApi(product: StoreProduct): Promise<StoreProduct> {
-  const res = await fetch(`${API_BASE}/api/products`, {
+  const res = await fetch(apiUrl("/api/products"), {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({
@@ -435,7 +463,7 @@ export async function updateProductApi(
   id: string,
   product: StoreProduct,
 ): Promise<StoreProduct> {
-  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/products/${encodeURIComponent(id)}`), {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify({
@@ -456,7 +484,7 @@ export async function updateProductApi(
 }
 
 export async function deleteProductApi(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
+  const res = await fetch(apiUrl(`/api/products/${encodeURIComponent(id)}`), {
     method: "DELETE",
     headers: authHeaders(),
   });

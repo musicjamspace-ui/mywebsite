@@ -7,12 +7,13 @@ import { productGalleryImages } from "@/lib/storeProducts";
 import { fetchStoreProductById, fetchStoreProducts } from "@/lib/api";
 import StoreBuyNowForm from "@/components/StoreBuyNowForm";
 import StoreProductGallery from "@/components/StoreProductGallery";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+const siteUrl = getSiteUrl();
 
 export const revalidate = 60;
 
@@ -84,7 +85,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const productUrl = `${BASE_URL}/store/${product.id}`;
+  const productUrl = `${siteUrl}/store/${product.id}`;
   const nameLower = product.name.toLowerCase();
   const catLower = product.category.toLowerCase();
 
@@ -167,7 +168,7 @@ export default async function StoreProductPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    image: productGalleryImages(product).map((img) => `${BASE_URL}${img}`),
+    image: productGalleryImages(product).map((img) => `${siteUrl}${img}`),
     description: product.description,
     brand: { "@type": "Brand", name: "Music Jam Space" },
     sku: product.id,
@@ -177,12 +178,12 @@ export default async function StoreProductPage({ params }: PageProps) {
       priceCurrency: "NPR",
       price: product.price,
       availability: "https://schema.org/InStock",
-      url: `${BASE_URL}/store/${product.id}`,
+      url: `${siteUrl}/store/${product.id}`,
       itemCondition: "https://schema.org/NewCondition",
       seller: {
         "@type": "Organization",
         name: "Music Jam Space",
-        url: BASE_URL,
+        url: siteUrl,
         description:
           "Nepal's leading online music store and rehearsal studio — instruments, gear, and booking in Kathmandu.",
       },
@@ -210,9 +211,9 @@ export default async function StoreProductPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-      { "@type": "ListItem", position: 2, name: "Store", item: `${BASE_URL}/store` },
-      { "@type": "ListItem", position: 3, name: product.name, item: `${BASE_URL}/store/${product.id}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Store", item: `${siteUrl}/store` },
+      { "@type": "ListItem", position: 3, name: product.name, item: `${siteUrl}/store/${product.id}` },
     ],
   };
 
@@ -302,7 +303,13 @@ export default async function StoreProductPage({ params }: PageProps) {
                     className="group rounded-lg border border-border bg-card overflow-hidden hover:border-primary/50 transition-all"
                   >
                     <div className="relative h-44">
-                      <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     </div>
                     <div className="p-4">
                       <p className="text-xs text-primary uppercase tracking-widest">{item.category}</p>

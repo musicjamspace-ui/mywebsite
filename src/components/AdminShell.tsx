@@ -83,6 +83,7 @@ export default function AdminShell({ children, activeKey, badges = {}, onLogout 
             src="/jamspace.jpg"
             alt="Music Jam Space logo"
             fill
+            sizes="36px"
             className="object-cover"
           />
         </div>

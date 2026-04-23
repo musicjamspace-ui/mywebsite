@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 export default function manifest(): MetadataRoute.Manifest {
+  const siteUrl = getSiteUrl();
   return {
     name: "Music Jam Space",
     short_name: "JamSpace",
@@ -17,19 +17,19 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["music", "shopping", "entertainment"],
     icons: [
       {
-        src: `${BASE_URL}/android-chrome-192x192.png`,
+        src: `${siteUrl}/android-chrome-192x192.png`,
         type: "image/png",
         sizes: "192x192",
         purpose: "any",
       },
       {
-        src: `${BASE_URL}/android-chrome-512x512.png`,
+        src: `${siteUrl}/android-chrome-512x512.png`,
         type: "image/png",
         sizes: "512x512",
         purpose: "any",
       },
       {
-        src: `${BASE_URL}/apple-touch-icon.png`,
+        src: `${siteUrl}/apple-touch-icon.png`,
         type: "image/png",
         sizes: "180x180",
         purpose: "any",
@@ -43,7 +43,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/book",
         icons: [
           {
-            src: `${BASE_URL}/android-chrome-192x192.png`,
+            src: `${siteUrl}/android-chrome-192x192.png`,
             sizes: "192x192",
             type: "image/png",
           },
@@ -56,7 +56,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/store",
         icons: [
           {
-            src: `${BASE_URL}/android-chrome-192x192.png`,
+            src: `${siteUrl}/android-chrome-192x192.png`,
             sizes: "192x192",
             type: "image/png",
           },
@@ -69,7 +69,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/",
         icons: [
           {
-            src: `${BASE_URL}/android-chrome-192x192.png`,
+            src: `${siteUrl}/android-chrome-192x192.png`,
             sizes: "192x192",
             type: "image/png",
           },

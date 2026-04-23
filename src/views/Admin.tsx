@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  API_BASE,
+  apiUrl,
   apiLogin,
   createOrderApi,
   createProductApi,
@@ -165,7 +165,7 @@ function ImageGalleryEditor({
       fd.append("file", file);
       const token = getStoredToken();
       try {
-        const res = await fetch(`${API_BASE}/api/upload`, {
+        const res = await fetch(apiUrl("/api/upload"), {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: fd,

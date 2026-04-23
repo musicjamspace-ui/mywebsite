@@ -3,8 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { fetchStoreProducts } from "@/lib/api";
+import { getSiteUrl } from "@/lib/siteUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   title: "Nepal's #1 Music Store Online | Buy Instruments | Music Jam Space",
@@ -42,13 +43,13 @@ export const metadata: Metadata = {
     "drum sticks Nepal",
     "music accessories Nepal",
   ],
-  alternates: { canonical: `${BASE_URL}/store` },
+  alternates: { canonical: `${siteUrl}/store` },
   robots: { index: true, follow: true },
   openGraph: {
     title: "Nepal's #1 Music Store | Music Jam Space",
     description:
       "Nepal's #1 online music shop — drums, guitars, keyboards, mics. Trusted prices & delivery.",
-    url: `${BASE_URL}/store`,
+    url: `${siteUrl}/store`,
     type: "website",
     images: [{ url: "/jamspace.jpg", width: 1200, height: 630, alt: "Music Jam Space Store" }],
   },
@@ -78,12 +79,12 @@ export default async function StorePage() {
     itemListElement: products.map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${BASE_URL}/store/${p.id}`,
+      url: `${siteUrl}/store/${p.id}`,
       name: p.name,
       item: {
         "@type": "Product",
         name: p.name,
-        image: `${BASE_URL}${p.image}`,
+        image: `${siteUrl}${p.image}`,
         offers: { "@type": "Offer", priceCurrency: "NPR", price: p.price },
       },
     })),
@@ -125,12 +126,13 @@ export default async function StorePage() {
                   className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-56 overflow-hidden">
-                    <Image
-                      src={product.image}
-                      alt={`${product.name} — buy in Nepal at Music Jam Space`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                  <Image
+                    src={product.image}
+                    alt={`${product.name} — buy in Nepal at Music Jam Space`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   </div>
                   <div className="p-5">
                     <p className="text-xs text-primary uppercase tracking-widest mb-2">{product.category}</p>

@@ -28,6 +28,14 @@ const ESEWA_NUMBER = "9860342125";
 const WHATSAPP_NUMBER_INTL = "9779860342125";
 const PHONE_TEL = "+9779860342125";
 
+function orderNotificationEmails(): string[] {
+  const raw = process.env.NEXT_PUBLIC_ORDER_RECEIVER_EMAIL?.trim() ?? "";
+  return raw
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function StoreBuyNowForm({ productName, productPrice }: Props) {
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
@@ -84,24 +92,29 @@ export default function StoreBuyNowForm({ productName, productPrice }: Props) {
       const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
 
       if (serviceId && templateId && publicKey) {
+        const recipients = orderNotificationEmails();
+        const templateParams = {
+          subject: `New Order - ${productName}`,
+          product_name: productName,
+          product_price: productPrice.toLocaleString("en-IN"),
+          customer_name: customerName.trim(),
+          phone: phone.trim(),
+          payment_mode: paymentMode,
+          location: location.trim(),
+          landmark: landmark.trim(),
+          notes: notes.trim() || "-",
+          order_id: orderId,
+        };
         try {
-          await emailjs.send(
-            serviceId,
-            templateId,
-            {
-              subject: `New Order - ${productName}`,
-              to_email: process.env.NEXT_PUBLIC_ORDER_RECEIVER_EMAIL || "",
-              product_name: productName,
-              product_price: productPrice.toLocaleString("en-IN"),
-              customer_name: customerName.trim(),
-              phone: phone.trim(),
-              payment_mode: paymentMode,
-              location: location.trim(),
-              landmark: landmark.trim(),
-              notes: notes.trim() || "-",
-              order_id: orderId,
-            },
-            { publicKey },
+          await Promise.all(
+            recipients.map((to_email) =>
+              emailjs.send(
+                serviceId,
+                templateId,
+                { ...templateParams, to_email },
+                { publicKey },
+              ),
+            ),
           );
         } catch {
           /* order is already in DB; email is best-effort */

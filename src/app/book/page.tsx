@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/siteUrl";
 import BookClient from "@/views/BookClient";
 import { Suspense } from "react";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   title: "Book a Rehearsal Room in Kathmandu | Music Jam Space",
@@ -20,13 +21,13 @@ export const metadata: Metadata = {
     "rehearsal room price Nepal",
     "music studio booking online",
   ],
-  alternates: { canonical: `${BASE_URL}/book` },
+  alternates: { canonical: `${siteUrl}/book` },
   robots: { index: true, follow: true },
   openGraph: {
     title: "Book a Rehearsal Room in Kathmandu | Music Jam Space",
     description:
       "Check real-time room availability and book your rehearsal session at Music Jam Space, Kathmandu. AC rooms from Rs. 350/hr.",
-    url: `${BASE_URL}/book`,
+    url: `${siteUrl}/book`,
     type: "website",
     images: [{ url: "/jamspace.jpg", width: 1200, height: 630, alt: "Music Jam Space booking" }],
   },

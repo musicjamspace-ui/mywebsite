@@ -145,6 +145,7 @@ export default function Index() {
             src="/hero-studio.jpg"
             alt="Music Jam Space rehearsal studio"
             fill
+            sizes="100vw"
             priority
             className="object-cover"
           />
@@ -234,6 +235,7 @@ export default function Index() {
                       src={room.id === 1 ? "/ROOM%201.jpg" : "/ROOM%202.jpg"}
                       alt={room.name}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
                       className="object-cover"
                     />
                   </div>
@@ -300,6 +302,7 @@ export default function Index() {
                         src={p.image}
                         alt={p.name}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover"
                       />
                     </div>

@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
 import { fetchStoreProducts } from "@/lib/api";
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 60;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const siteUrl = getSiteUrl();
   const now = new Date().toISOString();
 
   let products: Awaited<ReturnType<typeof fetchStoreProducts>> = [];
@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   /** Product detail URLs first — highest crawl priority for instrument search (drums, guitar, keyboard in Nepal, etc.). */
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${BASE_URL}/store/${p.id}`,
+    url: `${siteUrl}/store/${p.id}`,
     lastModified: now,
     changeFrequency: "weekly",
     priority: 1,
@@ -26,19 +26,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...productRoutes,
     {
-      url: `${BASE_URL}/store`,
+      url: `${siteUrl}/store`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.95,
     },
     {
-      url: `${BASE_URL}/`,
+      url: `${siteUrl}/`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.9,
     },
     {
-      url: `${BASE_URL}/book`,
+      url: `${siteUrl}/book`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,

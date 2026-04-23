@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { getSiteUrl } from "@/lib/siteUrl";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Music Jam Space | Nepal's #1 Music Store & Rehearsal Studio, Kathmandu",
     template: "%s | Music Jam Space",
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Music Jam Space" }],
   creator: "Music Jam Space",
   publisher: "Music Jam Space",
-  alternates: { canonical: BASE_URL },
+  alternates: { canonical: siteUrl },
   robots: {
     index: true,
     follow: true,
@@ -59,7 +60,7 @@ export const metadata: Metadata = {
     title: "Music Jam Space | Nepal's #1 Music Store & Rehearsal Studio",
     description:
       "Nepal's #1 online music store & rehearsal studio — instruments, gear, and room booking in Kathmandu.",
-    url: BASE_URL,
+    url: siteUrl,
     images: [
       {
         url: "/jamspace.jpg",

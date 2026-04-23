@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/siteUrl";
 import Index from "@/views/Index";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   title: "Music Jam Space | Nepal's #1 Music Store & Rehearsal Studio, Kathmandu",
@@ -35,12 +36,12 @@ export const metadata: Metadata = {
     "live band entertainment Nepal",
     "music events Kathmandu",
   ],
-  alternates: { canonical: BASE_URL },
+  alternates: { canonical: siteUrl },
   openGraph: {
     title: "Music Jam Space | Nepal's #1 Music Store & Rehearsal Studio",
     description:
       "Nepal's #1 music store & rehearsal hub in Kathmandu. Book rooms, buy instruments, live sound.",
-    url: BASE_URL,
+    url: siteUrl,
     type: "website",
     images: [{ url: "/jamspace.jpg", width: 1200, height: 630, alt: "Music Jam Space studio" }],
   },
@@ -52,9 +53,9 @@ const localBusinessJsonLd = {
   name: "Music Jam Space",
   description:
     "Nepal's #1 online music store and fully equipped air-conditioned rehearsal studio in Kathmandu — instruments, gear, room booking & live sound.",
-  url: BASE_URL,
+  url: siteUrl,
   telephone: "+9779860342125",
-  image: `${BASE_URL}/jamspace.jpg`,
+  image: `${siteUrl}/jamspace.jpg`,
   priceRange: "Rs. 350 – Rs. 500 / hr",
   address: {
     "@type": "PostalAddress",
