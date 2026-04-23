@@ -1,4 +1,5 @@
 import { normalizeBookingYmd, type Booking } from "@/lib/bookingStore";
+import type { StoreProduct } from "@/lib/storeProducts";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -101,6 +102,72 @@ async function parseError(res: Response): Promise<string> {
     /* ignore */
   }
   return res.statusText || "Request failed";
+}
+
+function asStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x) => String(x));
+}
+
+function asSpecArray(v: unknown): { label: string; value: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => (x && typeof x === "object" ? (x as Record<string, unknown>) : null))
+    .filter(Boolean)
+    .map((o) => ({
+      label: String(o!.label ?? ""),
+      value: String(o!.value ?? ""),
+    }));
+}
+
+/** Normalizes JSON from `GET /api/products` (camelCase) or legacy shapes. */
+export function normalizeStoreProduct(raw: Record<string, unknown>): StoreProduct {
+  let imagesRaw: unknown = raw.images;
+  if (typeof imagesRaw === "string") {
+    try {
+      imagesRaw = JSON.parse(imagesRaw);
+    } catch {
+      imagesRaw = [];
+    }
+  }
+  const imagesArr = Array.isArray(imagesRaw) ? imagesRaw.map(String).filter(Boolean) : [];
+  const bestForRaw = raw.bestFor ?? raw.best_for;
+  let bestForParsed: unknown = bestForRaw;
+  if (typeof bestForParsed === "string") {
+    try {
+      bestForParsed = JSON.parse(bestForParsed);
+    } catch {
+      bestForParsed = [];
+    }
+  }
+  let highlightsRaw: unknown = raw.highlights;
+  if (typeof highlightsRaw === "string") {
+    try {
+      highlightsRaw = JSON.parse(highlightsRaw);
+    } catch {
+      highlightsRaw = [];
+    }
+  }
+  let specsRaw: unknown = raw.specs;
+  if (typeof specsRaw === "string") {
+    try {
+      specsRaw = JSON.parse(specsRaw);
+    } catch {
+      specsRaw = [];
+    }
+  }
+  return {
+    id: String(raw.id ?? ""),
+    name: String(raw.name ?? ""),
+    category: String(raw.category ?? ""),
+    price: Number(raw.price ?? 0),
+    image: String(raw.image ?? "").trim() || "/jamspace.jpg",
+    images: imagesArr.length ? imagesArr : undefined,
+    description: String(raw.description ?? ""),
+    highlights: asStringArray(highlightsRaw),
+    specs: asSpecArray(specsRaw),
+    bestFor: asStringArray(bestForParsed),
+  };
 }
 
 function normalizeBooking(raw: Record<string, unknown>): Booking {
@@ -232,6 +299,38 @@ export async function fetchOrdersApi(): Promise<StoreOrder[]> {
   return raw.map((o) => normalizeOrder(o as Record<string, unknown>));
 }
 
+/**
+ * Store “Buy Now” from the public site — `POST /api/orders` has no auth.
+ * Saves the row in MySQL so Admin → Orders can see it.
+ */
+export async function submitPublicStoreOrder(payload: {
+  id: string;
+  customer: string;
+  phone: string;
+  address?: string;
+  productName: string;
+  amount: number;
+  payment: "COD" | "Prepayment";
+  notes?: string | null;
+}): Promise<StoreOrder> {
+  const res = await fetch(`${API_BASE}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: payload.id,
+      customer: payload.customer,
+      phone: payload.phone,
+      address: payload.address ?? "",
+      productName: payload.productName,
+      amount: payload.amount,
+      payment: payload.payment,
+      notes: payload.notes ?? null,
+    }),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return normalizeOrder((await res.json()) as Record<string, unknown>);
+}
+
 export async function createOrderApi(payload: {
   id: string;
   customer: string;
@@ -277,6 +376,87 @@ export async function updateOrderApi(
 
 export async function deleteOrderApi(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (res.status === 204) return;
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+}
+
+/** Public catalogue — no auth. Pass `next: { revalidate: n }` from Server Components. */
+export async function fetchStoreProducts(init?: RequestInit): Promise<StoreProduct[]> {
+  const res = await fetch(`${API_BASE}/api/products`, {
+    ...init,
+    headers: { Accept: "application/json", ...init?.headers },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  const raw = await res.json();
+  if (!Array.isArray(raw)) return [];
+  return raw.map((p) => normalizeStoreProduct(p as Record<string, unknown>));
+}
+
+export async function fetchStoreProductById(
+  id: string,
+  init?: RequestInit,
+): Promise<StoreProduct | null> {
+  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
+    ...init,
+    headers: { Accept: "application/json", ...init?.headers },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await parseError(res));
+  return normalizeStoreProduct((await res.json()) as Record<string, unknown>);
+}
+
+export async function createProductApi(product: StoreProduct): Promise<StoreProduct> {
+  const res = await fetch(`${API_BASE}/api/products`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      image: product.image,
+      images: product.images?.length ? product.images : [],
+      description: product.description,
+      highlights: product.highlights,
+      specs: product.specs,
+      bestFor: product.bestFor,
+    }),
+  });
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+  return normalizeStoreProduct((await res.json()) as Record<string, unknown>);
+}
+
+export async function updateProductApi(
+  id: string,
+  product: StoreProduct,
+): Promise<StoreProduct> {
+  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      image: product.image,
+      images: product.images?.length ? product.images : [],
+      description: product.description,
+      highlights: product.highlights,
+      specs: product.specs,
+      bestFor: product.bestFor,
+    }),
+  });
+  await throwIfBadAuth(res);
+  if (!res.ok) throw new Error(await parseError(res));
+  return normalizeStoreProduct((await res.json()) as Record<string, unknown>);
+}
+
+export async function deleteProductApi(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: authHeaders(),
   });

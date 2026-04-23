@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { submitPublicStoreOrder } from "@/lib/api";
 
 type PaymentMode = "Prepayment" | "COD";
 
@@ -62,41 +63,56 @@ export default function StoreBuyNowForm({ productName, productPrice }: Props) {
     void whatsappText;
     setSubmitting(true);
     try {
+      const orderId = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const addressLine = `${location.trim()} · Near: ${landmark.trim()}`;
+      const notesParts = [notes.trim(), `Landmark: ${landmark.trim()}`].filter(Boolean);
+      const notesForDb = notesParts.length ? notesParts.join("\n") : null;
+
+      await submitPublicStoreOrder({
+        id: orderId,
+        customer: customerName.trim(),
+        phone: phone.trim(),
+        address: addressLine,
+        productName: productName.trim(),
+        amount: productPrice,
+        payment: paymentMode,
+        notes: notesForDb,
+      });
+
       const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
       const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
       const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
 
-      if (!serviceId || !templateId || !publicKey) {
-        throw new Error("EmailJS config missing");
+      if (serviceId && templateId && publicKey) {
+        try {
+          await emailjs.send(
+            serviceId,
+            templateId,
+            {
+              subject: `New Order - ${productName}`,
+              to_email: process.env.NEXT_PUBLIC_ORDER_RECEIVER_EMAIL || "",
+              product_name: productName,
+              product_price: productPrice.toLocaleString("en-IN"),
+              customer_name: customerName.trim(),
+              phone: phone.trim(),
+              payment_mode: paymentMode,
+              location: location.trim(),
+              landmark: landmark.trim(),
+              notes: notes.trim() || "-",
+              order_id: orderId,
+            },
+            { publicKey },
+          );
+        } catch {
+          /* order is already in DB; email is best-effort */
+        }
       }
-
-      await emailjs.send(
-        serviceId,
-        templateId,
-        {
-          subject: `New Order - ${productName}`,
-          to_email: process.env.NEXT_PUBLIC_ORDER_RECEIVER_EMAIL || "",
-          product_name: productName,
-          product_price: productPrice.toLocaleString("en-IN"),
-          customer_name: customerName.trim(),
-          phone: phone.trim(),
-          payment_mode: paymentMode,
-          location: location.trim(),
-          landmark: landmark.trim(),
-          notes: notes.trim() || "-",
-        },
-        { publicKey },
-      );
 
       setOrderPlaced(true);
     } catch (err) {
       const message =
-        typeof err === "object" && err !== null && "text" in err
-          ? String((err as { text?: string }).text || "Unknown EmailJS error")
-          : err instanceof Error
-            ? err.message
-            : "Unknown EmailJS error";
-      alert(`Order email failed: ${message}`);
+        err instanceof Error ? err.message : "Could not place order. Check your connection and try again.";
+      alert(`Order failed: ${message}`);
     } finally {
       setSubmitting(false);
     }

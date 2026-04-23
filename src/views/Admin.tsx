@@ -30,14 +30,18 @@ import {
   API_BASE,
   apiLogin,
   createOrderApi,
+  createProductApi,
   deleteOrderApi,
+  deleteProductApi,
   fetchOrdersApi,
+  fetchStoreProducts,
   getStoredToken,
   onAdminAuthLost,
   setBookRouteAccess,
   setStoredToken,
   type StoreOrder,
   updateOrderApi,
+  updateProductApi,
 } from "@/lib/api";
 import {
   formatHourRange,
@@ -47,11 +51,7 @@ import {
   ROOMS,
   type Booking,
 } from "@/lib/bookingStore";
-import {
-  productGalleryImages,
-  STORE_PRODUCTS,
-  type StoreProduct,
-} from "@/lib/storeProducts";
+import { productGalleryImages, type StoreProduct } from "@/lib/storeProducts";
 import CalendarGrid from "@/components/CalendarGrid";
 import AdminForm from "@/components/AdminForm";
 import AdminShell from "@/components/AdminShell";
@@ -1196,14 +1196,13 @@ export default function Admin() {
   const [fullscreenBooking, setFullscreenBooking] = useState(false);
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
 
-  const [products, setProducts] = useState<StoreProduct[]>(STORE_PRODUCTS);
-  const [selectedProductId, setSelectedProductId] = useState(
-    STORE_PRODUCTS[0]?.id ?? "",
-  );
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState<ProductForm>(() =>
-    formFromProduct(STORE_PRODUCTS[0]),
+    formFromProduct(undefined),
   );
   const [storeCategoryFilter, setStoreCategoryFilter] =
     useState<StoreCategoryFilter>("all");
@@ -1263,16 +1262,39 @@ export default function Admin() {
   }, [authed]);
 
   useEffect(() => {
+    if (!authed) return;
+    let active = true;
+    (async () => {
+      setProductsLoading(true);
+      try {
+        const data = await fetchStoreProducts({ cache: "no-store" });
+        if (!active) return;
+        setProducts(data);
+        const first = data[0];
+        setSelectedProductId(first?.id ?? "");
+        setEditingProductId(null);
+        setProductForm(formFromProduct(first));
+      } catch (err) {
+        if (!active) return;
+        toast.error(
+          err instanceof Error ? err.message : "Failed to load store products",
+        );
+      } finally {
+        if (active) setProductsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [authed]);
+
+  useEffect(() => {
     const update = () => setIsNarrowViewport(window.innerWidth < 1200);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const selectedProduct = useMemo(
-    () => products.find((p) => p.id === selectedProductId) ?? products[0],
-    [products, selectedProductId],
-  );
   const forceBookingFullscreen =
     authed && section === "booking" && isNarrowViewport;
 
@@ -1301,7 +1323,7 @@ export default function Admin() {
     setShowProductModal(true);
   };
 
-  const handleProductSave = (e: React.FormEvent) => {
+  const handleProductSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const id = productForm.id.trim();
     const name = productForm.name.trim();
@@ -1326,6 +1348,10 @@ export default function Admin() {
       toast.error("Best For and Highlights need at least one line.");
       return;
     }
+    if (editingProductId && id !== editingProductId) {
+      toast.error("Product ID cannot be changed. Delete and create a new product if you need a new ID.");
+      return;
+    }
 
     const next: StoreProduct = {
       id,
@@ -1340,33 +1366,43 @@ export default function Admin() {
       specs,
     };
 
-    setProducts((prev) => {
-      if (editingProductId)
-        return prev.map((p) => (p.id === editingProductId ? next : p));
-      if (prev.some((p) => p.id === next.id)) {
-        toast.error("Product ID already exists.");
-        return prev;
+    try {
+      if (editingProductId) {
+        const updated = await updateProductApi(editingProductId, next);
+        setProducts((prev) => prev.map((p) => (p.id === editingProductId ? updated : p)));
+        setSelectedProductId(updated.id);
+        setEditingProductId(updated.id);
+        toast.success("Product updated.");
+      } else {
+        const created = await createProductApi(next);
+        setProducts((prev) => [created, ...prev]);
+        setSelectedProductId(created.id);
+        setEditingProductId(created.id);
+        toast.success("Product created.");
       }
-      return [next, ...prev];
-    });
-    setSelectedProductId(next.id);
-    setEditingProductId(next.id);
-    toast.success(editingProductId ? "Product updated." : "Product created.");
-    setShowProductModal(false);
+      setShowProductModal(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save product");
+    }
   };
 
-  const handleProductDelete = () => {
+  const handleProductDelete = async () => {
     if (!editingProductId) return;
-    setProducts((prev) => {
-      const filtered = prev.filter((p) => p.id !== editingProductId);
-      const fallback = filtered[0];
-      setSelectedProductId(fallback?.id ?? "");
-      setProductForm(formFromProduct(fallback));
-      setEditingProductId(fallback?.id ?? null);
-      return filtered;
-    });
-    setShowProductModal(false);
-    toast.success("Product deleted.");
+    try {
+      await deleteProductApi(editingProductId);
+      setProducts((prev) => {
+        const filtered = prev.filter((p) => p.id !== editingProductId);
+        const fallback = filtered[0];
+        setSelectedProductId(fallback?.id ?? "");
+        setProductForm(formFromProduct(fallback));
+        setEditingProductId(fallback?.id ?? null);
+        return filtered;
+      });
+      setShowProductModal(false);
+      toast.success("Product deleted.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete product");
+    }
   };
 
   const startNewProduct = () => {
@@ -2087,6 +2123,14 @@ export default function Admin() {
                   >
                     Manage products displayed in the public store
                   </p>
+                  {productsLoading && (
+                    <p
+                      className="text-xs mt-1"
+                      style={{ color: "rgba(255,255,255,0.45)" }}
+                    >
+                      Loading products from server…
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span
@@ -2272,11 +2316,28 @@ export default function Admin() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    setSelectedProductId(item.id);
-                                    setEditingProductId(item.id);
-                                    setProductForm(formFromProduct(item));
-                                    handleProductDelete();
+                                  onClick={async () => {
+                                    try {
+                                      await deleteProductApi(item.id);
+                                      setProducts((prev) => {
+                                        const filtered = prev.filter((p) => p.id !== item.id);
+                                        if (selectedProductId === item.id) {
+                                          const fb = filtered[0];
+                                          setSelectedProductId(fb?.id ?? "");
+                                          setProductForm(formFromProduct(fb));
+                                          setEditingProductId(fb?.id ?? null);
+                                        }
+                                        return filtered;
+                                      });
+                                      setShowProductModal(false);
+                                      toast.success("Product deleted.");
+                                    } catch (err) {
+                                      toast.error(
+                                        err instanceof Error
+                                          ? err.message
+                                          : "Failed to delete product",
+                                      );
+                                    }
                                   }}
                                   className="flex items-center justify-center rounded-lg p-2 transition-all"
                                   style={{

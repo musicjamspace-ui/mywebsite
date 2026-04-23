@@ -17,16 +17,32 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ROOMS, formatRs } from "@/lib/bookingStore";
-import { STORE_PRODUCTS } from "@/lib/storeProducts";
+import type { StoreProduct } from "@/lib/storeProducts";
+import { fetchStoreProducts } from "@/lib/api";
 
 const BOOKING_PHONE_DISPLAY = "986-0342125";
 const BOOKING_PHONE_TEL = "+9779860342125";
 
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const hasProducts = STORE_PRODUCTS.length > 0;
+  const [storePreview, setStorePreview] = useState<StoreProduct[]>([]);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const list = await fetchStoreProducts({ cache: "no-store" });
+        if (active) setStorePreview(list);
+      } catch {
+        if (active) setStorePreview([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+  const hasProducts = storePreview.length > 0;
   const navLinks = [
     { label: "Services", href: "#services" },
     { label: "Rooms", href: "#rooms" },
@@ -273,7 +289,7 @@ export default function Index() {
                 items.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {STORE_PRODUCTS.slice(0, 3).map((p) => (
+                {storePreview.slice(0, 3).map((p) => (
                   <Link
                     key={p.id}
                     href={`/store/${p.id}`}

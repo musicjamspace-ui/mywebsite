@@ -3,7 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ShieldCheck, Truck, Wrench } from "lucide-react";
 import { notFound } from "next/navigation";
-import { productGalleryImages, STORE_PRODUCTS } from "@/lib/storeProducts";
+import { productGalleryImages } from "@/lib/storeProducts";
+import { fetchStoreProductById, fetchStoreProducts } from "@/lib/api";
 import StoreBuyNowForm from "@/components/StoreBuyNowForm";
 import StoreProductGallery from "@/components/StoreProductGallery";
 
@@ -12,6 +13,8 @@ type PageProps = {
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
+
+export const revalidate = 60;
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   Guitars: [
@@ -68,7 +71,12 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const product = STORE_PRODUCTS.find((p) => p.id === id);
+  let product = null;
+  try {
+    product = await fetchStoreProductById(id, { next: { revalidate: 60 } });
+  } catch {
+    product = null;
+  }
   if (!product) {
     return {
       title: "Product Not Found | Music Jam Space",
@@ -134,15 +142,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export function generateStaticParams() {
-  return STORE_PRODUCTS.map((p) => ({ id: p.id }));
-}
-
 export default async function StoreProductPage({ params }: PageProps) {
   const { id } = await params;
-  const product = STORE_PRODUCTS.find((p) => p.id === id);
+  let product = null;
+  try {
+    product = await fetchStoreProductById(id, { next: { revalidate: 60 } });
+  } catch {
+    product = null;
+  }
   if (!product) notFound();
-  const related = STORE_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
+
+  let allProducts: Awaited<ReturnType<typeof fetchStoreProducts>> = [];
+  try {
+    allProducts = await fetchStoreProducts({ next: { revalidate: 60 } });
+  } catch {
+    allProducts = [];
+  }
+  const related = allProducts.filter((p) => p.id !== product.id).slice(0, 3);
   const combinedHighlights = [
     ...product.highlights,
     ...product.specs.map((s) => `${s.label}: ${s.value}`),
@@ -275,30 +291,31 @@ export default async function StoreProductPage({ params }: PageProps) {
             </div>
           </div>
 
-          <section className="mt-14">
-            <h2 className="text-2xl font-semibold text-foreground mb-5">You may also like</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {related.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/store/${item.id}`}
-                  className="group rounded-lg border border-border bg-card overflow-hidden hover:border-primary/50 transition-all"
-                >
-                  <div className="relative h-44">
-                    <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs text-primary uppercase tracking-widest">{item.category}</p>
-                    <h3 className="text-lg font-semibold text-foreground mt-1">{item.name}</h3>
-                    <p className="text-primary mt-1">Rs. {item.price.toLocaleString("en-IN")}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
+          {related.length > 0 && (
+            <section className="mt-14">
+              <h2 className="text-2xl font-semibold text-foreground mb-5">You may also like</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {related.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/store/${item.id}`}
+                    className="group rounded-lg border border-border bg-card overflow-hidden hover:border-primary/50 transition-all"
+                  >
+                    <div className="relative h-44">
+                      <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                    <div className="p-4">
+                      <p className="text-xs text-primary uppercase tracking-widest">{item.category}</p>
+                      <h3 className="text-lg font-semibold text-foreground mt-1">{item.name}</h3>
+                      <p className="text-primary mt-1">Rs. {item.price.toLocaleString("en-IN")}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </section>
     </div>
   );
 }
-

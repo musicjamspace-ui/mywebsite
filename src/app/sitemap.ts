@@ -1,13 +1,22 @@
 import type { MetadataRoute } from "next";
-import { STORE_PRODUCTS } from "@/lib/storeProducts";
+import { fetchStoreProducts } from "@/lib/api";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 60;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date().toISOString();
 
+  let products: Awaited<ReturnType<typeof fetchStoreProducts>> = [];
+  try {
+    products = await fetchStoreProducts({ next: { revalidate: 60 } });
+  } catch {
+    products = [];
+  }
+
   /** Product detail URLs first — highest crawl priority for instrument search (drums, guitar, keyboard in Nepal, etc.). */
-  const productRoutes: MetadataRoute.Sitemap = STORE_PRODUCTS.map((p) => ({
+  const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${BASE_URL}/store/${p.id}`,
     lastModified: now,
     changeFrequency: "weekly",

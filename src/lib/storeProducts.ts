@@ -1,3 +1,4 @@
+/** Product shape shared by admin, store UI, and API (`/api/products`). */
 export interface StoreProduct {
   id: string;
   name: string;
@@ -19,6 +20,7 @@ export function productGalleryImages(p: StoreProduct): string[] {
   return [p.image];
 }
 
+/** Default seed data (mirrored in `server/src/seedStoreProducts.mjs`). Public pages load from the API. */
 export const STORE_PRODUCTS: StoreProduct[] = [
   {
     id: "electric-guitar",

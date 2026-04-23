@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
-import { STORE_PRODUCTS } from "@/lib/storeProducts";
+import { fetchStoreProducts } from "@/lib/api";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8080";
 
@@ -60,26 +60,35 @@ export const metadata: Metadata = {
   },
 };
 
-const itemListJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "ItemList",
-  name: "Nepal's #1 Music Store — Instruments at Music Jam Space",
-  numberOfItems: STORE_PRODUCTS.length,
-  itemListElement: STORE_PRODUCTS.map((p, i) => ({
-    "@type": "ListItem",
-    position: i + 1,
-    url: `${BASE_URL}/store/${p.id}`,
-    name: p.name,
-    item: {
-      "@type": "Product",
-      name: p.name,
-      image: `${BASE_URL}${p.image}`,
-      offers: { "@type": "Offer", priceCurrency: "NPR", price: p.price },
-    },
-  })),
-};
+export const revalidate = 60;
 
-export default function StorePage() {
+export default async function StorePage() {
+  let products: Awaited<ReturnType<typeof fetchStoreProducts>> = [];
+  try {
+    products = await fetchStoreProducts({ next: { revalidate: 60 } });
+  } catch {
+    products = [];
+  }
+
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Nepal's #1 Music Store — Instruments at Music Jam Space",
+    numberOfItems: products.length,
+    itemListElement: products.map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: `${BASE_URL}/store/${p.id}`,
+      name: p.name,
+      item: {
+        "@type": "Product",
+        name: p.name,
+        image: `${BASE_URL}${p.image}`,
+        offers: { "@type": "Offer", priceCurrency: "NPR", price: p.price },
+      },
+    })),
+  };
+
   return (
     <div className="min-h-dvh bg-background">
       <script
@@ -103,32 +112,37 @@ export default function StorePage() {
             Browse our full collection of instruments and gear.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {STORE_PRODUCTS.map((product) => (
-              <Link
-                key={product.id}
-                href={`/store/${product.id}`}
-                className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={`${product.name} — buy in Nepal at Music Jam Space`}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-5">
-                  <p className="text-xs text-primary uppercase tracking-widest mb-2">{product.category}</p>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">{product.name}</h3>
-                  <p className="text-primary font-semibold">Rs. {product.price.toLocaleString("en-IN")}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {products.length === 0 ? (
+            <p className="text-muted-foreground text-center py-16">
+              No products are listed yet. Please check back soon.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/store/${product.id}`}
+                  className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="relative h-56 overflow-hidden">
+                    <Image
+                      src={product.image}
+                      alt={`${product.name} — buy in Nepal at Music Jam Space`}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <p className="text-xs text-primary uppercase tracking-widest mb-2">{product.category}</p>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">{product.name}</h3>
+                    <p className="text-primary font-semibold">Rs. {product.price.toLocaleString("en-IN")}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 }
-
