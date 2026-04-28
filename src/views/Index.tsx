@@ -21,9 +21,12 @@ import { useEffect, useState } from "react";
 import { ROOMS, formatRs } from "@/lib/bookingStore";
 import type { StoreProduct } from "@/lib/storeProducts";
 import { fetchStoreProducts } from "@/lib/api";
+import { isUploadImageUrl } from "@/lib/api";
 
 const BOOKING_PHONE_DISPLAY = "986-0342125";
 const BOOKING_PHONE_TEL = "+9779860342125";
+const GOOGLE_MAPS_URL =
+  "https://maps.app.goo.gl/nVtFwvEKmXsFoWfq8";
 
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,8 +75,8 @@ export default function Index() {
     },
     {
       icon: Guitar,
-      title: "Rehearsal Studio",
-      desc: "Fully well-equipped air-conditioned rehearsal studio.",
+      title: "Mix Mastering",
+      desc: "Professional mix and mastering for your tracks.",
     },
     {
       icon: Disc3,
@@ -302,6 +305,7 @@ export default function Index() {
                         src={p.image}
                         alt={p.name}
                         fill
+                        unoptimized={isUploadImageUrl(p.image)}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover"
                       />
@@ -352,19 +356,32 @@ export default function Index() {
               </article>
               <article className="bg-card border border-border rounded-lg p-6 flex flex-col items-center">
                 <MapPin className="w-7 h-7 text-primary mb-3" />
-                <h3 className="text-lg font-semibold mb-1">Visit Us</h3>
-                <p className="text-muted-foreground text-sm text-center leading-relaxed">
-                  Music Jam Space Studio
-                  <br />
-                  Bhottebahal, Sundhara, Kathmandu
-                </p>
+                <a
+                  href={GOOGLE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center"
+                >
+                  <h3 className="text-lg font-semibold mb-1 text-primary hover:underline">
+                    Visit Us
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed hover:text-foreground transition-colors">
+                    Music Jam Space Studio
+                    <br />
+                    Bhottebahal, Sundhara, Kathmandu
+                  </p>
+                </a>
               </article>
               <article className="bg-card border border-border rounded-lg p-6 flex flex-col items-center">
                 <Clock className="w-7 h-7 text-primary mb-3" />
-                <h3 className="text-lg font-semibold mb-1">Hours</h3>
-                <p className="text-foreground text-sm font-medium">
-                  6:00 AM - 9:00 PM
-                </p>
+                <Link href="/book" className="text-center">
+                  <h3 className="text-lg font-semibold mb-1 text-primary hover:underline">
+                    Hours
+                  </h3>
+                  <p className="text-foreground text-sm font-medium hover:underline">
+                    6:00 AM - 9:00 PM
+                  </p>
+                </Link>
                 <p className="text-muted-foreground text-xs mt-1">Open daily</p>
               </article>
             </div>

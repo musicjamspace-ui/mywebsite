@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { fetchStoreProducts } from "@/lib/api";
+import { isUploadImageUrl } from "@/lib/api";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 const siteUrl = getSiteUrl();
@@ -130,6 +131,7 @@ export default async function StorePage() {
                     src={product.image}
                     alt={`${product.name} — buy in Nepal at Music Jam Space`}
                     fill
+                    unoptimized={isUploadImageUrl(product.image)}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />

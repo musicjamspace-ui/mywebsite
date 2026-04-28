@@ -83,7 +83,7 @@ export default function CalendarGrid({
         ) : null}
 
         <div
-          className="overflow-x-auto overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch] scroll-smooth"
+          className="overflow-x-auto overscroll-x-contain touch-auto [-webkit-overflow-scrolling:touch] scroll-smooth"
           role="region"
           aria-label="Schedule grid, scroll horizontally for more days"
         >

@@ -23,6 +23,15 @@ const apiProxyRemote =
   process.env.API_PROXY_REMOTE?.trim().replace(/\/$/, "") ||
   "";
 
+const apiProxyRemoteUrl = (() => {
+  if (!apiProxyRemote) return null;
+  try {
+    return new URL(apiProxyRemote);
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -50,6 +59,18 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.musicjamspace.com", pathname: "/**" },
       { protocol: "https", hostname: "musicjamspace.com.np", pathname: "/**" },
       { protocol: "https", hostname: "www.musicjamspace.com.np", pathname: "/**" },
+      { protocol: "https", hostname: "jamspace.corexinnovations.com", pathname: "/uploads/**" },
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
+      ...(apiProxyRemoteUrl
+        ? [
+            {
+              protocol: apiProxyRemoteUrl.protocol.replace(":", "") as "http" | "https",
+              hostname: apiProxyRemoteUrl.hostname,
+              port: apiProxyRemoteUrl.port || undefined,
+              pathname: "/uploads/**",
+            },
+          ]
+        : []),
     ],
   },
   async rewrites() {
@@ -58,6 +79,10 @@ const nextConfig: NextConfig = {
       {
         source: "/api/:path*",
         destination: `${apiProxyRemote}/api/:path*`,
+      },
+      {
+        source: "/uploads/:path*",
+        destination: `${apiProxyRemote}/uploads/:path*`,
       },
     ];
   },

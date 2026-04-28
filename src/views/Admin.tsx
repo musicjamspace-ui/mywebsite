@@ -36,7 +36,9 @@ import {
   fetchOrdersApi,
   fetchStoreProducts,
   getStoredToken,
+  isUploadImageUrl,
   onAdminAuthLost,
+  resolveUploadUrl,
   setBookRouteAccess,
   setStoredToken,
   type StoreOrder,
@@ -175,8 +177,9 @@ function ImageGalleryEditor({
           throw new Error(err.error ?? "Upload failed");
         }
         const data = await res.json();
+        const uploadedUrl = resolveUploadUrl(String(data?.url ?? ""));
         setItems((prev) =>
-          prev.map((i) => (i.url === preview ? { url: data.url } : i)),
+          prev.map((i) => (i.url === preview ? { url: uploadedUrl || String(data?.url ?? "") } : i)),
         );
         URL.revokeObjectURL(preview);
       } catch (e) {
@@ -2249,6 +2252,7 @@ export default function Admin() {
                                   src={item.image}
                                   alt={item.name}
                                   fill
+                                  unoptimized={isUploadImageUrl(item.image)}
                                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                                 {gallery.length > 1 && (

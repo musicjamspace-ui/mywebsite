@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isUploadImageUrl } from "@/lib/api";
 
 const AUTO_INTERVAL_MS = 5000;
 
@@ -52,6 +53,7 @@ export default function StoreProductGallery({ images, alt, className }: Props) {
           src={src}
           alt={`${alt} — ${index + 1} of ${n}`}
           fill
+          unoptimized={isUploadImageUrl(src)}
           className="object-cover transition-transform duration-500 ease-out group-hover/gallery:scale-[1.08] motion-reduce:group-hover/gallery:scale-100"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority={index === 0}

@@ -31,6 +31,34 @@ export function apiUrl(apiPath: string): string {
   return base ? `${base}${path}` : path;
 }
 
+/** Convert uploaded media paths to a usable browser URL across local/proxy/prod modes. */
+export function resolveUploadUrl(input: string): string {
+  const raw = String(input ?? "").trim();
+  if (!raw) return raw;
+  if (/^(?:https?:)?\/\//i.test(raw) || /^data:/i.test(raw) || /^blob:/i.test(raw)) return raw;
+  const normalizedPath = raw.startsWith("/") ? raw : `/${raw}`;
+  if (!normalizedPath.startsWith("/uploads/")) return normalizedPath;
+  const base = getApiBase();
+  if (!base) return normalizedPath;
+  try {
+    return new URL(normalizedPath, base).toString();
+  } catch {
+    return normalizedPath;
+  }
+}
+
+export function isUploadImageUrl(input: string): boolean {
+  const raw = String(input ?? "").trim();
+  if (!raw) return false;
+  if (raw.startsWith("/uploads/")) return true;
+  try {
+    const u = new URL(raw);
+    return u.pathname.startsWith("/uploads/");
+  } catch {
+    return false;
+  }
+}
+
 export const ADMIN_TOKEN_KEY = "jamspace-admin-token";
 /** Set with admin login so /book/* routes allow access without re-entering password. */
 export const BOOK_ACCESS_KEY = "jamspace-book-auth";
@@ -189,8 +217,8 @@ export function normalizeStoreProduct(raw: Record<string, unknown>): StoreProduc
     name: String(raw.name ?? ""),
     category: String(raw.category ?? ""),
     price: Number(raw.price ?? 0),
-    image: String(raw.image ?? "").trim() || "/jamspace.jpg",
-    images: imagesArr.length ? imagesArr : undefined,
+    image: resolveUploadUrl(String(raw.image ?? "").trim()) || "/jamspace.jpg",
+    images: imagesArr.length ? imagesArr.map((img) => resolveUploadUrl(String(img))) : undefined,
     description: String(raw.description ?? ""),
     highlights: asStringArray(highlightsRaw),
     specs: asSpecArray(specsRaw),

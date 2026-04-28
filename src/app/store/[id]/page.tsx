@@ -5,6 +5,7 @@ import { ArrowLeft, ShieldCheck, Truck, Wrench } from "lucide-react";
 import { notFound } from "next/navigation";
 import { productGalleryImages } from "@/lib/storeProducts";
 import { fetchStoreProductById, fetchStoreProducts } from "@/lib/api";
+import { isUploadImageUrl } from "@/lib/api";
 import StoreBuyNowForm from "@/components/StoreBuyNowForm";
 import StoreProductGallery from "@/components/StoreProductGallery";
 import { getSiteUrl } from "@/lib/siteUrl";
@@ -307,6 +308,7 @@ export default async function StoreProductPage({ params }: PageProps) {
                         src={item.image}
                         alt={item.name}
                         fill
+                        unoptimized={isUploadImageUrl(item.image)}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
