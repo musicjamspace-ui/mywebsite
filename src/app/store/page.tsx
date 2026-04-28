@@ -9,18 +9,29 @@ import { getSiteUrl } from "@/lib/siteUrl";
 const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
-  title: "Nepal's #1 Music Store Online | Buy Instruments | Music Jam Space",
+  title: "Music Store in Nepal | Buy Instruments in Kathmandu | Music Jam Space",
   description:
-    "Music Jam Space is Nepal's #1 online music store — drum kits, guitars, bass, keyboards, studio mics & more. Trusted prices, quality-checked gear, pickup & local delivery from Kathmandu to musicians across Nepal.",
+    "Music Jam Space store offers guitars, drums, bass, keyboards, microphones, and accessories in Nepal. Trusted music store in Kathmandu with fair prices, pickup, and local delivery.",
   keywords: [
-    "#1 music store Nepal",
-    "number 1 music store Nepal",
-    "best music store Nepal",
-    "top music shop Kathmandu",
+    "music store in nepal",
+    "music store nepal",
+    "music store in kathmandu",
+    "music store kathmandu",
+    "online music store nepal",
+    "buy musical instruments nepal",
+    "music instrument store kathmandu",
+    "instrument shop kathmandu",
+    "music shop nepal",
+    "guitars in nepal",
+    "drums in nepal",
+    "drums in kathmandu",
+    "drums price in nepal",
+    "guitar price in nepal",
+    "keyboard price in nepal",
+    "microphone price nepal",
     "online music store Nepal",
     "buy musical instruments Nepal",
     "music instruments Nepal",
-    "music instrument store Kathmandu",
     "drum kit price Nepal",
     "drum price in Nepal",
     "buy drums Nepal",
@@ -47,17 +58,17 @@ export const metadata: Metadata = {
   alternates: { canonical: `${siteUrl}/store` },
   robots: { index: true, follow: true },
   openGraph: {
-    title: "Nepal's #1 Music Store | Music Jam Space",
+    title: "Music Store in Nepal | Music Jam Space Store",
     description:
-      "Nepal's #1 online music shop — drums, guitars, keyboards, mics. Trusted prices & delivery.",
+      "Trusted music store in Kathmandu, Nepal for guitars, drums, keyboards, microphones and accessories.",
     url: `${siteUrl}/store`,
     type: "website",
     images: [{ url: "/jamspace.jpg", width: 1200, height: 630, alt: "Music Jam Space Store" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nepal's #1 Music Store | Music Jam Space",
-    description: "Drums, guitars, keyboards, mics — Nepal's top online music shop.",
+    title: "Music Store in Nepal | Music Jam Space",
+    description: "Shop guitars, drums, keyboards and mics from our Kathmandu music store.",
     images: ["/jamspace.jpg"],
   },
 };
@@ -75,7 +86,7 @@ export default async function StorePage() {
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Nepal's #1 Music Store — Instruments at Music Jam Space",
+    name: "Music Store in Nepal — Instruments at Music Jam Space",
     numberOfItems: products.length,
     itemListElement: products.map((p, i) => ({
       "@type": "ListItem",
@@ -113,6 +124,23 @@ export default async function StorePage() {
           <p className="text-muted-foreground text-base sm:text-lg mb-12">
             Browse our full collection of instruments and gear.
           </p>
+
+          <section className="mb-10 rounded-xl border border-border bg-card/60 p-5 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.18em] text-primary mb-2">About MJS</p>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3">Music Jam Space</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-3xl">
+              MJS is Kathmandu&apos;s trusted music hub for instruments, rehearsal, and custom drum
+              builds. If you want to know more about MJS Custom Drums, visit the MJS section.
+            </p>
+            <div className="mt-5">
+              <Link
+                href="/mjs-drums"
+                className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Visit MJS
+              </Link>
+            </div>
+          </section>
 
           {products.length === 0 ? (
             <p className="text-muted-foreground text-center py-16">

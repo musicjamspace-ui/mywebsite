@@ -49,6 +49,13 @@
     --sidebar-accent-foreground: 40 20% 92%;
     --sidebar-border: 220 15% 20%;
     --sidebar-ring: 210 25% 78%;
+
+    /* MJS drum page tokens aligned to existing dark theme */
+    --mjs-surface: 220 18% 12%;
+    --mjs-surface-2: 220 16% 16%;
+    --mjs-line: 0 0% 100%;
+    --mjs-muted: 220 10% 68%;
+    --mjs-amber: 38 89% 68%;
   }
 }
 
@@ -65,5 +72,47 @@
 
   code, .font-mono {
     font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .font-mono-mjs {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .bg-mjs-surface {
+    background-color: hsl(var(--mjs-surface));
+  }
+  .bg-mjs-surface-2 {
+    background-color: hsl(var(--mjs-surface-2));
+  }
+  .bg-mjs-line {
+    background-color: hsl(var(--mjs-line) / 0.1);
+  }
+  .border-mjs-line {
+    border-color: hsl(var(--mjs-line) / 0.1);
+  }
+  .text-mjs-muted {
+    color: hsl(var(--mjs-muted));
+  }
+  .text-mjs-amber {
+    color: hsl(var(--mjs-amber));
+  }
+  .bg-gradient-amber {
+    background-image: linear-gradient(135deg, hsl(var(--mjs-amber)), hsl(28 82% 58%));
+  }
+  .bg-gradient-blue {
+    background-image: linear-gradient(135deg, hsl(222 60% 62%), hsl(250 48% 42%));
+  }
+  .bg-gradient-hero {
+    background-image: radial-gradient(ellipse at 50% 0%, hsl(220 32% 22%), hsl(var(--background)) 60%);
+  }
+  .shadow-glow-amber {
+    box-shadow: 0 20px 60px -20px hsl(var(--mjs-amber) / 0.35);
+  }
+  .shadow-glow-blue {
+    box-shadow: 0 20px 60px -20px hsl(228 55% 56% / 0.35);
+  }
+  .shadow-elegant {
+    box-shadow: 0 30px 80px -30px hsl(220 30% 2% / 0.8);
   }
 }

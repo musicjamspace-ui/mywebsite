@@ -331,6 +331,19 @@ export default function Index() {
                   </Link>
                 </Button>
               </div>
+              <div className="mt-10 rounded-xl border border-border bg-card/60 p-5 sm:p-6">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary mb-2">About MJS</p>
+                <h3 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3">MJS Custom Drums</h3>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-3xl">
+                  MJS is focused on drums. Visit the MJS section to explore custom drum builds and
+                  drum details.
+                </p>
+                <div className="mt-5">
+                  <Button asChild>
+                    <Link href="/mjs-drums">Visit MJS</Link>
+                  </Button>
+                </div>
+              </div>
             </div>
           </section>
         )}
