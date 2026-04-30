@@ -25,6 +25,7 @@ interface CalendarGridProps {
   isAdmin?: boolean;
   /** Hide title/legend row when the room is already indicated (e.g. mobile tabs). */
   embedded?: boolean;
+  hidePrivateDetails?: boolean;
 }
 
 export default function CalendarGrid({
@@ -35,6 +36,7 @@ export default function CalendarGrid({
   onAdminSelectBooking,
   isAdmin,
   embedded = false,
+  hidePrivateDetails = false,
 }: CalendarGridProps) {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const kathmanduDayKey = useKathmanduDayKey();
@@ -143,6 +145,10 @@ export default function CalendarGrid({
                 </div>
                 {dates.map((d) => {
                   const booking = getSlotBooking(d.date, hour);
+                  const displayBookedLabel =
+                    booking && !hidePrivateDetails
+                      ? booking.bandName?.trim() || "Booked"
+                      : "Booked";
                   const isCurrent = d.date === todayStr && hour === currentHour;
                   const isPast = d.date < todayStr || (d.date === todayStr && hour < currentHour);
 
@@ -178,7 +184,9 @@ export default function CalendarGrid({
                       `}
                       title={
                         booking
-                          ? `${booking.bandName} — click to edit`
+                          ? isAdmin
+                            ? `${booking.bandName} — click to edit`
+                            : "Booked"
                           : isPast
                             ? "Past slot"
                             : isAdmin
@@ -189,9 +197,9 @@ export default function CalendarGrid({
                       {booking ? (
                         <span
                           className="text-slot-booked font-medium w-full min-w-0 px-0.5 leading-snug break-words line-clamp-4"
-                          title={booking.bandName?.trim() || "Booked"}
+                          title={displayBookedLabel}
                         >
-                          🎸 {booking.bandName?.trim() || "Booked"}
+                          {displayBookedLabel}
                         </span>
                       ) : !isPast ? (
                         <span className="text-slot-available text-[11px] font-bold leading-none" aria-hidden>
@@ -208,7 +216,11 @@ export default function CalendarGrid({
       </div>
 
       {!(isAdmin && onAdminSelectBooking) && (
-        <BookingModal booking={selectedBooking} onClose={() => setSelectedBooking(null)} />
+        <BookingModal
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+          hidePrivateDetails={hidePrivateDetails}
+        />
       )}
     </>
   );

@@ -9,9 +9,10 @@ import {
 interface Props {
   booking: Booking | null;
   onClose: () => void;
+  hidePrivateDetails?: boolean;
 }
 
-export default function BookingModal({ booking, onClose }: Props) {
+export default function BookingModal({ booking, onClose, hidePrivateDetails = false }: Props) {
   if (!booking) return null;
   const room = ROOMS.find((r) => r.id === booking.room);
 
@@ -26,9 +27,11 @@ export default function BookingModal({ booking, onClose }: Props) {
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Band</span>
-            <span className="font-semibold text-foreground">{booking.bandName}</span>
+            <span className="font-semibold text-foreground">
+              {hidePrivateDetails ? "Booked" : booking.bandName}
+            </span>
           </div>
-          {booking.contactDetails ? (
+          {!hidePrivateDetails && booking.contactDetails ? (
             <div className="flex justify-between gap-2 items-start">
               <span className="text-muted-foreground shrink-0">Contact</span>
               <span className="font-medium text-foreground text-right break-words">{booking.contactDetails}</span>

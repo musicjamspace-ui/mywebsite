@@ -67,10 +67,22 @@ export default function BookClient() {
             ))}
           </TabsList>
           <TabsContent value="room-1" className="mt-3 focus-visible:outline-none">
-            <CalendarGrid room={ROOMS[0]} bookings={bookings} refreshKey={refreshKey} embedded />
+            <CalendarGrid
+              room={ROOMS[0]}
+              bookings={bookings}
+              refreshKey={refreshKey}
+              embedded
+              hidePrivateDetails
+            />
           </TabsContent>
           <TabsContent value="room-2" className="mt-3 focus-visible:outline-none">
-            <CalendarGrid room={ROOMS[1]} bookings={bookings} refreshKey={refreshKey} embedded />
+            <CalendarGrid
+              room={ROOMS[1]}
+              bookings={bookings}
+              refreshKey={refreshKey}
+              embedded
+              hidePrivateDetails
+            />
           </TabsContent>
         </Tabs>
       </main>
